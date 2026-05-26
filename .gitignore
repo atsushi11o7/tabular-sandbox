@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# uv / virtual env
+.venv/
+venv/
+.python-version
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 環境変数
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# データ・出力
+data/
+outputs/
+results/
+*.csv
+*.parquet
+*.ckpt
+*.pt
+*.pth
+*.pkl
+
+# モデル重みキャッシュ
+.cache/
+hf_cache/
