@@ -44,3 +44,6 @@ results/
 # モデル重みキャッシュ
 .cache/
 hf_cache/
+
+# 一時ファイル
+tmp/
