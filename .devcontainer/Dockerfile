@@ -53,4 +53,7 @@ RUN /opt/venv/bin/python -m ipykernel install \
 # Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
+# Codex CLI
+RUN curl -fsSL https://chatgpt.com/codex/install.sh | sh
+
 CMD ["bash"]
