@@ -2093,7 +2093,7 @@ wheels = [
 [[package]]
 name = "tabular-sandbox"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "catboost" },
     { name = "hydra-core" },

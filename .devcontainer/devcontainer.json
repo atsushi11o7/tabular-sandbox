@@ -27,6 +27,7 @@
     "LANG": "C.UTF-8",
     "LC_ALL": "C.UTF-8"
   },
+  "postCreateCommand": "uv sync --frozen",
   "shutdownAction": "none", 
   "customizations": {
     "vscode": {
