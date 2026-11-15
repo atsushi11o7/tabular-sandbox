@@ -47,3 +47,7 @@ hf_cache/
 
 # 一時ファイル
 tmp/
+
+# エージェント用スキル（gh skill install で取得）
+.claude/skills/
+.agents/skills/

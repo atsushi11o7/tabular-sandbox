@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.6.3-cudnn-devel-ubuntu24.04
+FROM nvidia/cuda:12.9.2-cudnn-devel-ubuntu24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PIP_ROOT_USER_ACTION=ignore \
@@ -52,5 +52,8 @@ RUN /opt/venv/bin/python -m ipykernel install \
 
 # Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# Codex CLI
+RUN curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
 CMD ["bash"]
