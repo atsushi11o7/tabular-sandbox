@@ -11,61 +11,25 @@ ROC-AUC と fit/predict 時間が学習サイズでどう変わるかを見る�
 from __future__ import annotations
 
 import json
-import os
 import time
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]  # /workspace
+from tabular_sandbox.env import REPO_ROOT, load_dotenv
 
-
-def _load_dotenv(path: Path) -> None:
-    # uv run は既定で .env を読まないため、TABPFN_TOKEN を手動でプロセスへ渡す
-    if not path.exists():
-        return
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip())
-
-
-_load_dotenv(ROOT / ".env")
+load_dotenv()  # TABPFN_TOKEN を tabpfn の import 前に環境変数へ載せる
 
 import numpy as np  # noqa: E402
-from sklearn.datasets import fetch_openml  # noqa: E402
 from sklearn.metrics import accuracy_score, roc_auc_score  # noqa: E402
 from sklearn.model_selection import train_test_split  # noqa: E402
 from tabpfn import TabPFNClassifier  # noqa: E402
 from tabpfn.model_loading import ModelSource  # noqa: E402
+
+from tabular_sandbox.data import load_adult, stratified_subsample  # noqa: E402
 
 # None = 学習プール全量。それ以外はその件数へ層化サブサンプリングする
 TRAIN_SIZES: list[int | None] = [1000, 5000, 10000, 20000, None]
 TEST_SIZE = 0.2
 RANDOM_STATE = 0
 DEVICE = "cuda"
-
-
-def load_adult() -> tuple:
-    ds = fetch_openml("adult", version=2, as_frame=True)
-    X = ds.data  # 生のまま。カテゴリ列・欠損を含む（前処理しない）
-    y = (ds.target == ">50K").astype(int).to_numpy()
-    return X, y
-
-
-def stratified_subsample(y: np.ndarray, n: int, rng: np.random.Generator) -> np.ndarray:
-    """層化比率を保ったまま n 件抽出するインデックスを返す。"""
-    idx = np.arange(len(y))
-    if n >= len(y):
-        return idx
-    pos, neg = idx[y == 1], idx[y == 0]
-    n_pos = round(n * len(pos) / len(y))
-    n_neg = n - n_pos
-    take = np.concatenate(
-        [rng.choice(pos, n_pos, replace=False), rng.choice(neg, n_neg, replace=False)]
-    )
-    rng.shuffle(take)
-    return take
 
 
 def main() -> None:
@@ -126,7 +90,7 @@ def main() -> None:
         "results": results,
     }
 
-    out_dir = ROOT / "results" / "01_tabpfn"
+    out_dir = REPO_ROOT / "results" / "01_tabpfn"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "sweep.json"
     out_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False))
