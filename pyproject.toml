@@ -18,6 +18,7 @@ dependencies = [
 
     # テーブル基盤モデル
     "tabpfn>=2.0",
+    "structured-data-models>=0.2.1",  # Kumo Tabular など (NVIDIA SDM)
 
     # ハイパラ探索・実験管理
     "optuna>=3.6",
