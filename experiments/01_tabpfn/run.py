@@ -12,18 +12,17 @@ from __future__ import annotations
 
 import json
 import time
+from pathlib import Path
 
-from tabular_sandbox.env import REPO_ROOT, load_dotenv
+import numpy as np
+from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import train_test_split
+from tabpfn import TabPFNClassifier
+from tabpfn.model_loading import ModelSource
 
-load_dotenv()  # TABPFN_TOKEN を tabpfn の import 前に環境変数へ載せる
+from tabular_sandbox.data import load_adult, stratified_subsample
 
-import numpy as np  # noqa: E402
-from sklearn.metrics import accuracy_score, roc_auc_score  # noqa: E402
-from sklearn.model_selection import train_test_split  # noqa: E402
-from tabpfn import TabPFNClassifier  # noqa: E402
-from tabpfn.model_loading import ModelSource  # noqa: E402
-
-from tabular_sandbox.data import load_adult, stratified_subsample  # noqa: E402
+ROOT = Path(__file__).resolve().parents[2]  # /workspace
 
 # None = 学習プール全量。それ以外はその件数へ層化サブサンプリングする
 TRAIN_SIZES: list[int | None] = [1000, 5000, 10000, 20000, None]
@@ -90,7 +89,7 @@ def main() -> None:
         "results": results,
     }
 
-    out_dir = REPO_ROOT / "results" / "01_tabpfn"
+    out_dir = ROOT / "results" / "01_tabpfn"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "sweep.json"
     out_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False))
