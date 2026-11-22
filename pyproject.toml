@@ -18,6 +18,7 @@ dependencies = [
 
     # テーブル基盤モデル
     "tabpfn>=2.0",
+    "structured-data-models>=0.2.1",  # Kumo Tabular など (NVIDIA SDM)
 
     # ハイパラ探索・実験管理
     "optuna>=3.6",
@@ -41,6 +42,13 @@ dependencies = [
     # PyTorch (CUDA 12.9 対応 wheel)
     "torch>=2.7",
 ]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [dependency-groups]
 dev = [

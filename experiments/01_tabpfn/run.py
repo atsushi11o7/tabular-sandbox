@@ -11,61 +11,25 @@ ROC-AUC と fit/predict 時間が学習サイズでどう変わるかを見る�
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 
+import numpy as np
+from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import train_test_split
+from tabpfn import TabPFNClassifier
+from tabpfn.model_loading import ModelSource
+
+from tabular_sandbox.data import load_adult, stratified_subsample
+
 ROOT = Path(__file__).resolve().parents[2]  # /workspace
-
-
-def _load_dotenv(path: Path) -> None:
-    # uv run は既定で .env を読まないため、TABPFN_TOKEN を手動でプロセスへ渡す
-    if not path.exists():
-        return
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip())
-
-
-_load_dotenv(ROOT / ".env")
-
-import numpy as np  # noqa: E402
-from sklearn.datasets import fetch_openml  # noqa: E402
-from sklearn.metrics import accuracy_score, roc_auc_score  # noqa: E402
-from sklearn.model_selection import train_test_split  # noqa: E402
-from tabpfn import TabPFNClassifier  # noqa: E402
-from tabpfn.model_loading import ModelSource  # noqa: E402
 
 # None = 学習プール全量。それ以外はその件数へ層化サブサンプリングする
 TRAIN_SIZES: list[int | None] = [1000, 5000, 10000, 20000, None]
 TEST_SIZE = 0.2
 RANDOM_STATE = 0
 DEVICE = "cuda"
-
-
-def load_adult() -> tuple:
-    ds = fetch_openml("adult", version=2, as_frame=True)
-    X = ds.data  # 生のまま。カテゴリ列・欠損を含む（前処理しない）
-    y = (ds.target == ">50K").astype(int).to_numpy()
-    return X, y
-
-
-def stratified_subsample(y: np.ndarray, n: int, rng: np.random.Generator) -> np.ndarray:
-    """層化比率を保ったまま n 件抽出するインデックスを返す。"""
-    idx = np.arange(len(y))
-    if n >= len(y):
-        return idx
-    pos, neg = idx[y == 1], idx[y == 0]
-    n_pos = round(n * len(pos) / len(y))
-    n_neg = n - n_pos
-    take = np.concatenate(
-        [rng.choice(pos, n_pos, replace=False), rng.choice(neg, n_neg, replace=False)]
-    )
-    rng.shuffle(take)
-    return take
+WARMUP_ROWS = 500
 
 
 def main() -> None:
@@ -80,6 +44,14 @@ def main() -> None:
 
     rng = np.random.default_rng(RANDOM_STATE)
     model_file = ModelSource.get_classifier_v3().default_filename
+
+    # 初回だけ重みの読み込みや CUDA の初期化が入るので、計測前に1回空打ちして除外する
+    t0 = time.perf_counter()
+    warm = TabPFNClassifier(device=DEVICE, model_path=model_file, random_state=RANDOM_STATE)
+    warm.fit(X_pool.iloc[:WARMUP_ROWS], y_pool[:WARMUP_ROWS])
+    warm.predict_proba(X_test.iloc[:WARMUP_ROWS])
+    warmup_sec = time.perf_counter() - t0
+    print(f"warmup: {warmup_sec:.1f}s", flush=True)
 
     results: list[dict] = []
     for size in TRAIN_SIZES:
@@ -109,7 +81,8 @@ def main() -> None:
         )
         print(
             f"n_train={len(y_tr):>6}: AUC={auc:.4f} acc={acc:.4f} "
-            f"fit={fit_sec:.2f}s predict={predict_sec:.2f}s"
+            f"fit={fit_sec:.2f}s predict={predict_sec:.2f}s",
+            flush=True,
         )
 
     summary = {
@@ -122,6 +95,7 @@ def main() -> None:
         "split": f"stratified holdout, test_size={TEST_SIZE}, seed={RANDOM_STATE}",
         "n_test": int(len(y_test)),
         "device": DEVICE,
+        "warmup_sec": warmup_sec,
         "preprocessing": "none (raw DataFrame with categorical + missing passed directly)",
         "results": results,
     }

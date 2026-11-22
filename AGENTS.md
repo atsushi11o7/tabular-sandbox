@@ -14,10 +14,10 @@
 
 ## ディレクトリ構成
 
-`PYTHONPATH=/workspace` が通っているので、`src/` 配下はそのまま `import` できる。
+`src/tabular_sandbox/` をパッケージとして editable インストールしている（devcontainer の `postCreateCommand` で `uv sync --frozen`）。`from tabular_sandbox.xxx import ...` で import する。
 
 - `notebooks/` — 探索・可視化用の `.ipynb`。試行錯誤はここで自由に。
-- `src/` — 固まった共通処理・再利用するモジュール。Notebook で安定したコードはここへ切り出す。
+- `src/tabular_sandbox/` — 固まった共通処理・再利用するモジュール。Notebook で安定したコードはここへ切り出す。
 - `experiments/` — 実験の実行スクリプト（エントリポイント）。
 - `configs/` — hydra 設定（使う場合のみ）。
 - `data/` `outputs/` `results/` — 入出力。すべて gitignore 済み（コミットしない）。

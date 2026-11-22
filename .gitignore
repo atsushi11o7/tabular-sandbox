@@ -51,3 +51,5 @@ tmp/
 # エージェント用スキル（gh skill install で取得）
 .claude/skills/
 .agents/skills/
+
+articles/images/

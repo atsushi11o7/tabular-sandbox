@@ -2,7 +2,6 @@ FROM nvidia/cuda:12.9.2-cudnn-devel-ubuntu24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PIP_ROOT_USER_ACTION=ignore \
-    PYTHONPATH=/workspace \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH=/opt/venv/bin:/root/.local/bin:${PATH}
