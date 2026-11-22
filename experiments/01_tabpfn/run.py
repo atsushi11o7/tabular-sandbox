@@ -29,6 +29,7 @@ TRAIN_SIZES: list[int | None] = [1000, 5000, 10000, 20000, None]
 TEST_SIZE = 0.2
 RANDOM_STATE = 0
 DEVICE = "cuda"
+WARMUP_ROWS = 500
 
 
 def main() -> None:
@@ -43,6 +44,14 @@ def main() -> None:
 
     rng = np.random.default_rng(RANDOM_STATE)
     model_file = ModelSource.get_classifier_v3().default_filename
+
+    # 初回だけ重みの読み込みや CUDA の初期化が入るので、計測前に1回空打ちして除外する
+    t0 = time.perf_counter()
+    warm = TabPFNClassifier(device=DEVICE, model_path=model_file, random_state=RANDOM_STATE)
+    warm.fit(X_pool.iloc[:WARMUP_ROWS], y_pool[:WARMUP_ROWS])
+    warm.predict_proba(X_test.iloc[:WARMUP_ROWS])
+    warmup_sec = time.perf_counter() - t0
+    print(f"warmup: {warmup_sec:.1f}s", flush=True)
 
     results: list[dict] = []
     for size in TRAIN_SIZES:
@@ -72,7 +81,8 @@ def main() -> None:
         )
         print(
             f"n_train={len(y_tr):>6}: AUC={auc:.4f} acc={acc:.4f} "
-            f"fit={fit_sec:.2f}s predict={predict_sec:.2f}s"
+            f"fit={fit_sec:.2f}s predict={predict_sec:.2f}s",
+            flush=True,
         )
 
     summary = {
@@ -85,6 +95,7 @@ def main() -> None:
         "split": f"stratified holdout, test_size={TEST_SIZE}, seed={RANDOM_STATE}",
         "n_test": int(len(y_test)),
         "device": DEVICE,
+        "warmup_sec": warmup_sec,
         "preprocessing": "none (raw DataFrame with categorical + missing passed directly)",
         "results": results,
     }
